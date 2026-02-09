@@ -463,6 +463,102 @@
             color: #ffffff;
         }
         
+        /* Cartes de bureau */
+        .bureau-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+        }
+        body.dark-mode .bureau-card {
+            background-color: #3d3d3d;
+        }
+        .bureau-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        body.dark-mode .bureau-header {
+            border-bottom: 2px solid #555;
+        }
+        .bureau-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        body.dark-mode .bureau-title {
+            color: #ffffff;
+        }
+        .bureau-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .bureau-stat {
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        body.dark-mode .bureau-stat {
+            background-color: #444;
+        }
+        .bureau-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .bureau-stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        /* Résultats par candidat dans la carte bureau */
+        .candidate-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+        }
+        body.dark-mode .candidate-result {
+            background-color: #444;
+        }
+        .candidate-result.winner {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left-color: #2ecc71;
+            font-weight: bold;
+        }
+        body.dark-mode .candidate-result.winner {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+        .candidate-name {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .candidate-votes {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        body.dark-mode .candidate-votes {
+            color: #ffffff;
+        }
+        .candidate-percentage {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
         .no-data {
             text-align: center;
             padding: 50px;
@@ -584,6 +680,9 @@
             .chart-container {
                 height: 300px;
             }
+            .bureau-stats {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -677,7 +776,7 @@
             
             <div class="control-group">
                 <label for="candidate-filter">👥 Filtre candidat (optionnel) :</label>
-                <input type="text" id="candidate-filter" placeholder="Nom du candidat...">
+                    <input type="text" id="candidate-filter" placeholder="Nom du candidat...">
             </div>
         </div>
         
@@ -862,6 +961,7 @@
                     trackUsage('commune_selected', { commune: currentCommune });
                     updateBureauSelect();
                     updateResults();
+                    updateBureauDetails(); // Mettre à jour les détails par bureau
                 }
             });
             
@@ -869,11 +969,13 @@
                 currentBureau = this.value;
                 trackUsage('bureau_selected', { bureau: currentBureau });
                 updateResults();
+                updateBureauDetails(); // Mettre à jour les détails par bureau
             });
             
             document.getElementById('candidate-filter').addEventListener('input', function() {
                 currentCandidateFilter = this.value.toLowerCase();
                 updateResults();
+                updateBureauDetails(); // Mettre à jour les détails par bureau
             });
             
             // Initialiser les onglets
@@ -1110,6 +1212,11 @@
                     });
                     document.getElementById(`${tabId}-tab`).classList.add('active');
                     
+                    // Si on clique sur l'onglet "Détails par bureau", mettre à jour l'affichage
+                    if (tabId === 'details' && currentCommune) {
+                        updateBureauDetails();
+                    }
+                    
                     // Tracker l'usage
                     trackUsage('tab_switched', { tab: tabId });
                 });
@@ -1145,10 +1252,22 @@
             });
             
             // Ajouter les événements pour les filtres avancés
-            document.getElementById('filter-nuance').addEventListener('change', updateResults);
-            document.getElementById('filter-participation-min').addEventListener('input', updateResults);
-            document.getElementById('filter-participation-max').addEventListener('input', updateResults);
-            document.getElementById('filter-votes-min').addEventListener('input', updateResults);
+            document.getElementById('filter-nuance').addEventListener('change', function() {
+                updateResults();
+                updateBureauDetails();
+            });
+            document.getElementById('filter-participation-min').addEventListener('input', function() {
+                updateResults();
+                updateBureauDetails();
+            });
+            document.getElementById('filter-participation-max').addEventListener('input', function() {
+                updateResults();
+                updateBureauDetails();
+            });
+            document.getElementById('filter-votes-min').addEventListener('input', function() {
+                updateResults();
+                updateBureauDetails();
+            });
         }
         
         // Initialiser le mode sombre
@@ -1340,6 +1459,142 @@
             updateChartLegend(filteredData);
         }
         
+        // Mettre à jour les détails bureau par bureau
+        function updateBureauDetails() {
+            if (!currentCommune) return;
+            
+            const detailedView = document.getElementById('detailed-view');
+            
+            // Filtrer les données selon la commune
+            let filteredData = allData.filter(item => item.communeName === currentCommune);
+            
+            // Appliquer les filtres avancés
+            filteredData = applyAdvancedFilters(filteredData);
+            
+            // Trier par bureau
+            filteredData.sort((a, b) => a.bureauCode - b.bureauCode);
+            
+            if (filteredData.length === 0) {
+                detailedView.innerHTML = `
+                    <div class="alert alert-info">
+                        <p>Aucun bureau de vote ne correspond aux critères de filtrage.</p>
+                        <p>Essayez de modifier vos filtres ou sélectionnez une autre commune.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Générer l'affichage pour chaque bureau
+            let htmlContent = '';
+            
+            filteredData.forEach(bureau => {
+                // Calculer les statistiques du bureau
+                const tauxParticipation = bureau.inscrits > 0 ? (bureau.votants / bureau.inscrits * 100).toFixed(1) : 0;
+                const tauxAbstention = bureau.inscrits > 0 ? (bureau.abstentions / bureau.inscrits * 100).toFixed(1) : 0;
+                const tauxBlancsNuls = bureau.votants > 0 ? ((bureau.blancs + bureau.nuls) / bureau.votants * 100).toFixed(1) : 0;
+                const tauxExprimes = bureau.votants > 0 ? (bureau.exprimés / bureau.votants * 100).toFixed(1) : 0;
+                
+                // Trouver le gagnant
+                let winner = null;
+                if (bureau.candidates.length > 0) {
+                    winner = bureau.candidates.reduce((prev, current) => 
+                        prev.voix > current.voix ? prev : current
+                    );
+                }
+                
+                // Générer le HTML pour les candidats
+                let candidatesHTML = '';
+                
+                // Trier les candidats par nombre de voix (décroissant)
+                const sortedCandidates = [...bureau.candidates].sort((a, b) => b.voix - a.voix);
+                
+                sortedCandidates.forEach((candidate, index) => {
+                    // Filtrer par nom de candidat si un filtre est appliqué
+                    if (currentCandidateFilter && 
+                        !candidate.fullName.toLowerCase().includes(currentCandidateFilter) &&
+                        !candidate.liste.toLowerCase().includes(currentCandidateFilter)) {
+                        return;
+                    }
+                    
+                    const isWinner = winner && candidate.fullName === winner.fullName;
+                    const candidateClass = isWinner ? 'candidate-result winner' : 'candidate-result';
+                    
+                    candidatesHTML += `
+                        <div class="${candidateClass}">
+                            <div class="candidate-name">
+                                <span class="candidate-color" style="background-color: ${colorPalette[index % colorPalette.length]}"></span>
+                                <span>
+                                    <strong>${candidate.fullName}</strong><br>
+                                    <small>${candidate.liste} • ${candidate.nuance || 'Non renseigné'}</small>
+                                </span>
+                            </div>
+                            <div class="candidate-votes">
+                                ${candidate.voix.toLocaleString()} voix
+                            </div>
+                            <div class="candidate-percentage">
+                                ${candidate.pourcentExprimes.toFixed(1)}% des exprimés
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Générer le HTML pour la carte du bureau
+                htmlContent += `
+                    <div class="bureau-card">
+                        <div class="bureau-header">
+                            <div class="bureau-title">
+                                📊 Bureau de Vote ${bureau.bureauCode}
+                            </div>
+                            <div style="color: #7f8c8d; font-size: 0.9em;">
+                                Code: ${bureau.communeCode}-${bureau.bureauCode}
+                            </div>
+                        </div>
+                        
+                        <div class="bureau-stats">
+                            <div class="bureau-stat">
+                                <div class="bureau-stat-value">${bureau.inscrits.toLocaleString()}</div>
+                                <div class="bureau-stat-label">Inscrits</div>
+                            </div>
+                            <div class="bureau-stat">
+                                <div class="bureau-stat-value">${tauxParticipation}%</div>
+                                <div class="bureau-stat-label">Participation</div>
+                            </div>
+                            <div class="bureau-stat">
+                                <div class="bureau-stat-value">${tauxAbstention}%</div>
+                                <div class="bureau-stat-label">Abstention</div>
+                            </div>
+                            <div class="bureau-stat">
+                                <div class="bureau-stat-value">${tauxBlancsNuls}%</div>
+                                <div class="bureau-stat-label">Blancs/Nuls</div>
+                            </div>
+                        </div>
+                        
+                        <h4>Résultats par candidat (${bureau.candidates.length} candidats)</h4>
+                        ${candidatesHTML || '<p class="alert alert-info">Aucun candidat ne correspond aux critères de filtrage.</p>'}
+                        
+                        ${winner ? `
+                            <div class="alert alert-success" style="margin-top: 15px;">
+                                <strong>🏆 Gagnant du bureau :</strong> ${winner.fullName} avec ${winner.voix.toLocaleString()} voix (${winner.pourcentExprimes.toFixed(1)}% des exprimés)
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            detailedView.innerHTML = htmlContent;
+            
+            // Ajouter un résumé en haut
+            const summaryHTML = `
+                <div class="alert alert-info">
+                    <h4>Résumé pour ${currentCommune}</h4>
+                    <p>Affichage de <strong>${filteredData.length}</strong> bureau(x) de vote sur cette commune.</p>
+                    <p>${currentCandidateFilter ? `Filtre candidat actif : "${currentCandidateFilter}"` : 'Aucun filtre candidat actif'}</p>
+                </div>
+            `;
+            
+            detailedView.insertAdjacentHTML('afterbegin', summaryHTML);
+        }
+        
         // Appliquer les filtres avancés
         function applyAdvancedFilters(data) {
             let filteredData = [...data];
@@ -1375,6 +1630,17 @@
                 filteredData = filteredData.map(item => {
                     const filteredCandidates = item.candidates.filter(candidate => 
                         candidate.voix >= minVotes
+                    );
+                    return { ...item, candidates: filteredCandidates };
+                }).filter(item => item.candidates.length > 0);
+            }
+            
+            // Filtre par nom de candidat
+            if (currentCandidateFilter) {
+                filteredData = filteredData.map(item => {
+                    const filteredCandidates = item.candidates.filter(candidate => 
+                        candidate.fullName.toLowerCase().includes(currentCandidateFilter) ||
+                        candidate.liste.toLowerCase().includes(currentCandidateFilter)
                     );
                     return { ...item, candidates: filteredCandidates };
                 }).filter(item => item.candidates.length > 0);
@@ -2149,12 +2415,6 @@
             
             // Enregistrer dans la console (à remplacer par votre service d'analytics)
             console.log('Usage tracked:', usageData);
-            
-            // Vous pouvez remplacer ceci par un appel à Google Analytics, Matomo, etc.
-            // Exemple pour Google Analytics:
-            // if (typeof gtag !== 'undefined') {
-            //     gtag('event', action, details);
-            // }
         }
         
         // Initialiser l'application au chargement de la page
@@ -2176,5 +2436,4 @@
     <!-- Inclure la bibliothèque SheetJS pour l'export Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
-
 </html>
