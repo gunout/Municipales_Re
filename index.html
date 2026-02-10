@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyseur des Élections Municipales 2020 - La Réunion</title>
+    <title>Analyseur Élections Municipales (2008, 2014, 2020)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -688,17 +688,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 Analyseur des Élections Municipales 2020 - La Réunion</h1>
-        <div class="subtitle">Analyse avancée des résultats électoraux avec visualisations interactives</div>
+        <h1>📊 Analyseur Multi-Format Élections Municipales</h1>
+        <div class="subtitle">Compatible fichiers 2008, 2014 et 2020 (format ministériel)</div>
         
         <!-- Zone de téléchargement de fichier -->
         <div class="file-upload" id="file-upload-area">
-            <input type="file" id="file-input" accept=".txt">
+            <input type="file" id="file-input" accept=".txt,.csv">
             <label for="file-input">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Cliquez pour sélectionner votre fichier de résultats</div>
-                <div class="upload-subtext">Format attendu : fichier .txt avec les résultats par bureau de vote</div>
-                <div class="upload-subtext">(Utilisez le fichier : 2020-05-18-resultats-par-niveau-burvot-t1-france-La reunion.txt)</div>
+                <div class="upload-subtext">Formats supportés : Fichiers résultats par bureau de vote (.txt)</div>
+                <div class="upload-subtext">(Détecte automatiquement les formats 2008, 2014, 2020)</div>
             </label>
             <div class="file-name" id="file-name-display">Aucun fichier sélectionné</div>
         </div>
@@ -742,6 +742,9 @@
                         <option value="LR">Les Républicains</option>
                         <option value="SOC">Socialiste</option>
                         <option value="ECO">Écologiste</option>
+                        <option value="NC">Non Classé</option>
+                        <option value="UG">Union de Gauche</option>
+                        <option value="UD">Union de Droite</option>
                     </select>
                 </div>
                 <div class="filter-item">
@@ -919,7 +922,7 @@
         
         <div id="no-data" class="no-data">
             <p>Chargez un fichier de résultats pour commencer l'analyse.</p>
-            <p>Le fichier doit être au format texte (.txt) avec les résultats des élections municipales 2020.</p>
+            <p>Formats supportés : Fichiers résultats par bureau (.txt) - 2008, 2014, 2020.</p>
         </div>
         
         <!-- Alertes contextuelles -->
@@ -928,7 +931,7 @@
         </div>
         
         <div class="footer">
-            <p>Analyseur des Élections Municipales 2020 - La Réunion | Développé avec HTML, CSS et JavaScript</p>
+            <p>Analyseur Multi-Format Élections Municipales | Développé avec HTML, CSS et JavaScript</p>
             <p>© 2024 - Outil d'analyse électorale avancée</p>
         </div>
     </div>
@@ -945,7 +948,8 @@
         let colorPalette = [
             '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', 
             '#1abc9c', '#d35400', '#c0392b', '#16a085', '#8e44ad',
-            '#27ae60', '#f1c40f', '#e67e22', '#95a5a6', '#7f8c8d'
+            '#27ae60', '#f1c40f', '#e67e22', '#95a5a6', '#7f8c8d',
+            '#34495e', '#7f8c8d'
         ];
         
         // Initialisation de l'application
@@ -961,7 +965,7 @@
                     trackUsage('commune_selected', { commune: currentCommune });
                     updateBureauSelect();
                     updateResults();
-                    updateBureauDetails(); // Mettre à jour les détails par bureau
+                    updateBureauDetails();
                 }
             });
             
@@ -969,13 +973,13 @@
                 currentBureau = this.value;
                 trackUsage('bureau_selected', { bureau: currentBureau });
                 updateResults();
-                updateBureauDetails(); // Mettre à jour les détails par bureau
+                updateBureauDetails();
             });
             
             document.getElementById('candidate-filter').addEventListener('input', function() {
                 currentCandidateFilter = this.value.toLowerCase();
                 updateResults();
-                updateBureauDetails(); // Mettre à jour les détails par bureau
+                updateBureauDetails();
             });
             
             // Initialiser les onglets
@@ -1009,10 +1013,7 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            // Afficher le nom du fichier
             document.getElementById('file-name-display').textContent = file.name;
-            
-            // Afficher l'indicateur de chargement
             document.getElementById('loading-indicator').style.display = 'block';
             document.getElementById('no-data').style.display = 'none';
             document.getElementById('results-section').style.display = 'none';
@@ -1020,34 +1021,27 @@
             document.getElementById('quick-actions').style.display = 'none';
             document.getElementById('main-tabs').style.display = 'none';
             
-            // Lire le fichier
             const reader = new FileReader();
             
             reader.onload = function(e) {
                 try {
-                    // Analyser les données
                     const fileContent = e.target.result;
                     allData = parseData(fileContent);
                     
-                    // Masquer l'indicateur de chargement
                     document.getElementById('loading-indicator').style.display = 'none';
                     
-                    // Vérifier si des données ont été trouvées
                     if (allData.length > 0) {
                         trackUsage('file_loaded', { 
                             rows: allData.length, 
                             communes: new Set(allData.map(d => d.communeName)).size 
                         });
                         
-                        // Remplir la liste des communes
                         populateCommuneSelect();
                         
-                        // Afficher les contrôles et actions
                         document.getElementById('controls-section').style.display = 'flex';
                         document.getElementById('quick-actions').style.display = 'flex';
                         document.getElementById('main-tabs').style.display = 'flex';
                         
-                        // Afficher un message pour sélectionner une commune
                         document.getElementById('no-data').style.display = 'block';
                         document.getElementById('no-data').innerHTML = `
                             <p>✅ Fichier chargé avec succès !</p>
@@ -1055,7 +1049,6 @@
                             <p>Sélectionnez une commune dans la liste ci-dessus pour voir les résultats.</p>
                         `;
                         
-                        // Remplir les listes de comparaison
                         populateComparisonSelects();
                     } else {
                         document.getElementById('no-data').style.display = 'block';
@@ -1081,87 +1074,214 @@
                 document.getElementById('no-data').style.display = 'block';
                 document.getElementById('no-data').innerHTML = `
                     <p>❌ Erreur lors de la lecture du fichier.</p>
-                    <p>Veuillez réessayer.</p>
                 `;
             };
             
-            // Lire le fichier comme texte
             reader.readAsText(file);
         }
         
-        // Fonction pour parser les données brutes
+        /**
+         * FONCTION PRINCIPALE DE PARSING
+         * Détecte et parse les formats 2008, 2014 et 2020
+         */
         function parseData(rawText) {
             const lines = rawText.split('\n');
             if (lines.length < 2) return [];
+
+            // 1. Détection du délimiteur (Tab, Point-virgule, Virgule)
+            const firstLine = lines[0];
+            let delimiter = '\t';
             
-            const headers = lines[0].split('\t');
+            const countTab = (firstLine.match(/\t/g) || []).length;
+            const countSemi = (firstLine.match(/;/g) || []).length;
+            const countComma = (firstLine.match(/,/g) || []).length;
+
+            if (countSemi > countTab && countSemi > countComma) {
+                delimiter = ';';
+            } else if (countComma > countTab && countComma > countSemi) {
+                delimiter = ',';
+            }
+
+            const headers = lines[0].split(delimiter).map(h => h.trim());
             const dataLines = lines.slice(1);
+
+            // Fonction helper pour trouver l'index d'une colonne par nom
+            const findCol = (possibleNames) => {
+                const index = headers.findIndex(h => possibleNames.some(name => h.includes(name)));
+                return index >= 0 ? index : -1;
+            };
+
+            // Identification des colonnes clés
+            const idxCommuneName = findCol(['Nom de la commune', 'Libellé de la commune', 'Commune']);
+            const idxBureauCode = findCol(['N° de bureau de vote', 'Code du b.vote', 'Bureau']);
+            const idxInscrits = findCol(['Inscrits']);
+            const idxVotants = findCol(['Votants']);
+            const idxExprimes = findCol(['Exprimés']);
+            const idxNom = findCol(['Nom', 'Nom du candidat', 'Nom du candidat tête de liste']);
+            const idxPrenom = findCol(['Prénom', 'Prénom du candidat', 'Prénom du candidat tête de liste']);
+            const idxListe = findCol(['Liste', 'Nom de la liste']);
+            const idxNuance = findCol(['Code nuance', 'Code Nuance', 'Nuance']);
+            const idxVoix = findCol(['Voix', 'Nombre de voix']);
             
-            const parsedData = [];
-            
-            dataLines.forEach(line => {
+            // Heuristique pour déterminer le type de format
+            // Les formats historiques (2008/2014) ont "N° tour" ou "Date de l'export" 
+            // et sont en format "long" (1 ligne = 1 candidat)
+            const isHistoricalFormat = (findCol(['N° tour']) !== -1 || findCol(['Date de l\'export']) !== -1);
+
+            if (isHistoricalFormat) {
+                return parseHistoricalFormat(dataLines, delimiter, {
+                    idxCommuneName, idxBureauCode, idxInscrits, idxVotants, idxExprimes,
+                    idxNom, idxPrenom, idxListe, idxNuance, idxVoix
+                });
+            } else {
+                // Format 2020 (Tabulaire large)
+                return parseTabular2020Format(dataLines, delimiter, headers);
+            }
+        }
+
+        // Parseur pour les formats 2008/2014 (Format Long)
+        function parseHistoricalFormat(lines, delimiter, idx) {
+            const tempData = {}; // Clé: CommuneName-BureauCode -> Objet
+
+            lines.forEach(line => {
                 if (line.trim() === '') return;
+                const cols = line.split(delimiter);
                 
-                const columns = line.split('\t');
-                if (columns.length < 20) return; // Ligne trop courte
+                // Validation basique
+                if (cols.length <= Math.max(idx.idxVoix, idx.idxNom, idx.idxBureauCode)) return;
+
+                const communeName = cols[idx.idxCommuneName]?.trim() || 'Inconnu';
+                const bureauCode = cols[idx.idxBureauCode]?.trim() || '00';
+                const key = `${communeName}-${bureauCode}`;
+
+                // Initialiser l'objet si inexistant
+                if (!tempData[key]) {
+                    tempData[key] = {
+                        communeName,
+                        bureauCode,
+                        inscrits: parseInt(cols[idx.idxInscrits]) || 0,
+                        votants: parseInt(cols[idx.idxVotants]) || 0,
+                        blancs: 0, 
+                        nuls: 0,
+                        exprimes: parseInt(cols[idx.idxExprimes]) || 0,
+                        candidates: []
+                    };
+                }
+
+                // Extraire candidat
+                const nom = cols[idx.idxNom]?.trim() || '';
+                const prenom = cols[idx.idxPrenom]?.trim() || '';
+                const listeName = idx.idxListe !== -1 ? (cols[idx.idxListe]?.trim() || '') : '';
+                const nuance = idx.idxNuance !== -1 ? (cols[idx.idxNuance]?.trim() || '') : '';
+                const voix = parseInt(cols[idx.idxVoix]) || 0;
                 
-                // Extraire les informations de base
-                const communeCode = columns[2];
-                const communeName = columns[3];
-                const bureauCode = columns[4];
+                if (nom || prenom) {
+                    const fullName = `${prenom} ${nom}`.trim();
+                    // Si pas de liste explicite, on utilise le nom du candidat
+                    const liste = listeName || fullName; 
+                    
+                    tempData[key].candidates.push({
+                        fullName: fullName,
+                        nom: nom,
+                        prenom: prenom,
+                        liste: liste,
+                        nuance: nuance,
+                        voix: voix,
+                        pourcentInscrits: 0, 
+                        pourcentExprimes: 0
+                    });
+                }
+            });
+
+            // Conversion Map -> Array et calcul des pourcentages
+            const parsedData = Object.values(tempData);
+
+            parsedData.forEach(item => {
+                // Vérifier la cohérence des exprimés
+                const totalVoix = item.candidates.reduce((sum, c) => sum + c.voix, 0);
+                // On privilégie le total des voix par rapport au fichier, sauf si écart flagrant
+                if (totalVoix > 0 && Math.abs(totalVoix - item.exprimés) > totalVoix * 0.1) {
+                     // Si écart > 10%, on met à jour les exprimés avec la somme des voix
+                     item.exprimés = totalVoix;
+                }
+
+                item.candidates.forEach(c => {
+                    c.pourcentInscrits = item.inscrits > 0 ? (c.voix / item.inscrits * 100) : 0;
+                    c.pourcentExprimes = item.exprimés > 0 ? (c.voix / item.exprimés * 100) : 0;
+                });
+            });
+
+            return parsedData;
+        }
+
+        // Parseur pour le format 2020 (Format Large / Wide)
+        function parseTabular2020Format(lines, delimiter, headers) {
+            const parsedData = [];
+            lines.forEach(line => {
+                if (line.trim() === '') return;
+                const columns = line.split(delimiter);
+                if (columns.length < 20) return; 
+
+                // Structure 2020 standard (approximative basée sur l'ancien code)
+                const communeCode = columns[2] || '';
+                const communeName = columns[3] || '';
+                const bureauCode = columns[4] || '';
                 const inscrits = parseInt(columns[5]) || 0;
                 const abstentions = parseInt(columns[6]) || 0;
                 const votants = parseInt(columns[8]) || 0;
                 const blancs = parseInt(columns[10]) || 0;
                 const nuls = parseInt(columns[13]) || 0;
-                const exprimés = parseInt(columns[16]) || 0;
-                
-                // Extraire les informations des candidats (jusqu'à 10 candidats)
+                const exprimes = parseInt(columns[16]) || 0;
+
                 const candidates = [];
+                // Blocs de candidats commencent souvent après l'index 16-19
+                // On cherche dynamiquement "Nom du candidat" ou on utilise une logique de blocs
+                // Ici on essaie de trouver l'index du premier candidat
+                let startCandidateIndex = -1;
+                for(let i=0; i<columns.length; i++) {
+                     if (columns[i] && (columns[i].includes('Nom') || columns[i].includes('Candidat'))) {
+                         startCandidateIndex = i;
+                         break;
+                     }
+                }
                 
-                // Structure des colonnes pour chaque candidat
-                // N.Pan., Code Nuance, Sexe, Nom, Prénom, Liste, Voix, % Voix/Ins, % Voix/Exp
-                const candidateColumnSize = 9;
-                
+                // Si on ne trouve pas l'en-tête candidat, on tente l'approche par bloc (ancienne méthode)
+                if (startCandidateIndex === -1) startCandidateIndex = 19;
+
+                // On itère par pas de 9 (Structure typique 2020)
                 for (let i = 0; i < 10; i++) {
-                    const startCol = 19 + (i * candidateColumnSize);
-                    
-                    // Vérifier si nous avons assez de colonnes pour ce candidat
-                    if (startCol + 8 < columns.length) {
-                        const pan = columns[startCol] || '';
-                        const nuance = columns[startCol + 1] || '';
-                        const sexe = columns[startCol + 2] || '';
-                        const nom = columns[startCol + 3] || '';
-                        const prenom = columns[startCol + 4] || '';
-                        const liste = columns[startCol + 5] || '';
-                        const voixStr = columns[startCol + 6] || '0';
-                        const pourcentInscritsStr = columns[startCol + 7] || '0';
-                        const pourcentExprimesStr = columns[startCol + 8] || '0';
+                    const idxNom = startCandidateIndex + 3; 
+                    const idxPrenom = startCandidateIndex + 4;
+                    const idxListe = startCandidateIndex + 5;
+                    const idxVoix = startCandidateIndex + 6;
+
+                    if (idxVoix + 3 < columns.length) {
+                        const nom = (columns[idxNom] || '').trim();
+                        const prenom = (columns[idxPrenom] || '').trim();
+                        const liste = (columns[idxListe] || '').trim();
+                        const voixStr = (columns[idxVoix] || '0').replace(/\s/g, '');
+                        const voix = parseInt(voixStr) || 0;
                         
-                        // Nettoyer et convertir les nombres
-                        const voix = parseInt(voixStr.replace(/\s/g, '')) || 0;
-                        const pourcentInscrits = parseFloat(pourcentInscritsStr.replace(',', '.')) || 0;
-                        const pourcentExprimes = parseFloat(pourcentExprimesStr.replace(',', '.')) || 0;
-                        
-                        // Si le candidat a au moins un nom, on l'ajoute
-                        if (nom.trim() !== '' || liste.trim() !== '') {
-                            candidates.push({
-                                pan,
-                                nuance,
-                                sexe,
-                                nom: nom.trim(),
-                                prenom: prenom.trim(),
-                                liste: liste.trim(),
+                        if (nom || liste) {
+                             candidates.push({
+                                nom,
+                                prenom,
+                                liste,
                                 voix,
-                                pourcentInscrits,
-                                pourcentExprimes,
+                                pourcentInscrits: 0,
+                                pourcentExprimes: 0,
                                 fullName: `${prenom} ${nom}`.trim() || liste
                             });
                         }
                     }
+                    // Incrément pour le candidat suivant (bloc de 9)
+                    // Note: Si les colonnes ne sont pas strictement alignées, cette logique peut échouer.
+                    // Une approche plus robuste serait de scanner toutes les colonnes au-delà d'un point.
+                    // Pour simplifier et conserver la compatibilité avec le code initial, on garde le pas de 9.
+                    // Si on détecte que la ligne suivante contient "Nom", on réinitialise l'index (cas rare)
+                    startCandidateIndex += 9;
                 }
-                
-                // Ajouter les données à notre tableau
+
                 parsedData.push({
                     communeCode,
                     communeName,
@@ -1171,11 +1291,19 @@
                     votants,
                     blancs,
                     nuls,
-                    exprimés,
+                    exprimes,
                     candidates
                 });
             });
             
+            // Calculer les pourcentages
+            parsedData.forEach(item => {
+                 item.candidates.forEach(c => {
+                    c.pourcentInscrits = item.inscrits > 0 ? (c.voix / item.inscrits * 100) : 0;
+                    c.pourcentExprimes = item.exprimés > 0 ? (c.voix / item.exprimés * 100) : 0;
+                });
+            });
+
             return parsedData;
         }
         
@@ -1194,51 +1322,39 @@
             });
         }
         
-        // Initialiser les onglets
         function initTabs() {
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(tab => {
                 tab.addEventListener('click', function() {
-                    // Retirer la classe active de tous les onglets
                     tabs.forEach(t => t.classList.remove('active'));
-                    
-                    // Ajouter la classe active à l'onglet cliqué
                     this.classList.add('active');
                     
-                    // Afficher le contenu correspondant
                     const tabId = this.getAttribute('data-tab');
                     document.querySelectorAll('.tab-content').forEach(content => {
                         content.classList.remove('active');
                     });
                     document.getElementById(`${tabId}-tab`).classList.add('active');
                     
-                    // Si on clique sur l'onglet "Détails par bureau", mettre à jour l'affichage
                     if (tabId === 'details' && currentCommune) {
                         updateBureauDetails();
                     }
                     
-                    // Tracker l'usage
                     trackUsage('tab_switched', { tab: tabId });
                 });
             });
         }
         
-        // Initialiser les boutons d'action
         function initActionButtons() {
-            // Export des données
             document.getElementById('export-btn').addEventListener('click', function() {
                 trackUsage('export_clicked');
                 exportToExcel();
             });
             
-            // Comparaison
             document.getElementById('compare-btn').addEventListener('click', function() {
-                // Passer à l'onglet comparaison
                 document.querySelector('.tab[data-tab="comparison"]').click();
             });
         }
         
-        // Initialiser les filtres avancés
         function initAdvancedFilters() {
             const toggleBtn = document.getElementById('toggle-advanced-filters');
             const filtersDiv = document.getElementById('advanced-filters');
@@ -1251,7 +1367,6 @@
                 trackUsage('advanced_filters_toggled', { show: filtersDiv.classList.contains('show') });
             });
             
-            // Ajouter les événements pour les filtres avancés
             document.getElementById('filter-nuance').addEventListener('change', function() {
                 updateResults();
                 updateBureauDetails();
@@ -1270,39 +1385,32 @@
             });
         }
         
-        // Initialiser le mode sombre
         function initDarkMode() {
             const toggleBtn = document.getElementById('toggle-dark-mode');
-            
             toggleBtn.addEventListener('click', function() {
                 document.body.classList.toggle('dark-mode');
                 localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
                 trackUsage('dark_mode_toggled', { enabled: document.body.classList.contains('dark-mode') });
             });
             
-            // Restaurer depuis localStorage
             if (localStorage.getItem('darkMode') === 'true') {
                 document.body.classList.add('dark-mode');
             }
         }
         
-        // Initialiser le mode accessibilité
         function initAccessibilityMode() {
             const toggleBtn = document.getElementById('toggle-accessibility');
-            
             toggleBtn.addEventListener('click', function() {
                 document.body.classList.toggle('high-contrast');
                 localStorage.setItem('highContrastMode', document.body.classList.contains('high-contrast'));
                 trackUsage('accessibility_toggled', { enabled: document.body.classList.contains('high-contrast') });
             });
             
-            // Restaurer depuis localStorage
             if (localStorage.getItem('highContrastMode') === 'true') {
                 document.body.classList.add('high-contrast');
             }
         }
         
-        // Initialiser la comparaison
         function initComparison() {
             document.getElementById('run-comparison').addEventListener('click', function() {
                 const commune1 = document.getElementById('comparison-commune-1').value;
@@ -1316,7 +1424,6 @@
             });
         }
         
-        // Remplir les listes de comparaison
         function populateComparisonSelects() {
             const commune1Select = document.getElementById('comparison-commune-1');
             const commune2Select = document.getElementById('comparison-commune-2');
@@ -1339,7 +1446,6 @@
             });
         }
         
-        // Sauvegarde automatique des filtres
         function saveState() {
             const state = {
                 commune: currentCommune,
@@ -1355,7 +1461,6 @@
             const saved = localStorage.getItem('electionAnalyzerState');
             if (saved) {
                 const state = JSON.parse(saved);
-                // Restaurer les modes d'affichage
                 if (state.darkMode) {
                     document.body.classList.add('dark-mode');
                 }
@@ -1365,7 +1470,6 @@
             }
         }
         
-        // Mettre à jour la liste des bureaux de vote
         function updateBureauSelect() {
             const bureauSelect = document.getElementById('bureau-select');
             bureauSelect.innerHTML = '<option value="all">Tous les bureaux</option>';
@@ -1384,21 +1488,17 @@
             currentBureau = 'all';
         }
         
-        // Mettre à jour les résultats affichés
         function updateResults() {
             if (!currentCommune) return;
             
-            // Sauvegarder l'état
             saveState();
             
-            // Filtrer les données selon la commune et le bureau sélectionné
             let filteredData = allData.filter(item => item.communeName === currentCommune);
             
             if (currentBureau !== 'all') {
                 filteredData = filteredData.filter(item => item.bureauCode === currentBureau);
             }
             
-            // Appliquer les filtres avancés
             filteredData = applyAdvancedFilters(filteredData);
             
             if (filteredData.length === 0) {
@@ -1407,17 +1507,14 @@
                 return;
             }
             
-            // Afficher la section des résultats
             document.getElementById('no-data').style.display = 'none';
             document.getElementById('results-section').style.display = 'block';
             
-            // Mettre à jour le nom de la commune
             document.getElementById('commune-name').textContent = currentCommune;
             document.getElementById('commune-info').textContent = currentBureau === 'all' 
                 ? `Résultats pour tous les bureaux de vote (${filteredData.length} bureau(s))`
                 : `Résultats pour le bureau de vote ${currentBureau}`;
             
-            // Calculer les statistiques globales
             let totalInscrits = 0;
             let totalVotants = 0;
             let totalAbstentions = 0;
@@ -1438,63 +1535,44 @@
             const tauxAbstention = totalInscrits > 0 ? (totalAbstentions / totalInscrits * 100).toFixed(1) : 0;
             const tauxBlancsNuls = totalVotants > 0 ? ((totalBlancs + totalNuls) / totalVotants * 100).toFixed(1) : 0;
             
-            // Mettre à jour les statistiques
             document.getElementById('stat-inscrits').textContent = totalInscrits.toLocaleString();
             document.getElementById('stat-participation').textContent = `${tauxParticipation}%`;
             document.getElementById('stat-abstention').textContent = `${tauxAbstention}%`;
             document.getElementById('stat-blancs-nuls').textContent = `${tauxBlancsNuls}%`;
             
-            // Préparer les données pour les graphiques
             prepareChartData(filteredData);
             prepareParticipationChart(filteredData);
             updateResultsTable(filteredData);
-            
-            // Mettre à jour l'analyse avancée
             updateAdvancedAnalysis(filteredData);
-            
-            // Générer les alertes intelligentes
             generateSmartAlerts(filteredData);
-            
-            // Mettre à jour la légende
             updateChartLegend(filteredData);
         }
         
-        // Mettre à jour les détails bureau par bureau
         function updateBureauDetails() {
             if (!currentCommune) return;
             
             const detailedView = document.getElementById('detailed-view');
-            
-            // Filtrer les données selon la commune
             let filteredData = allData.filter(item => item.communeName === currentCommune);
             
-            // Appliquer les filtres avancés
             filteredData = applyAdvancedFilters(filteredData);
-            
-            // Trier par bureau
             filteredData.sort((a, b) => a.bureauCode - b.bureauCode);
             
             if (filteredData.length === 0) {
                 detailedView.innerHTML = `
                     <div class="alert alert-info">
                         <p>Aucun bureau de vote ne correspond aux critères de filtrage.</p>
-                        <p>Essayez de modifier vos filtres ou sélectionnez une autre commune.</p>
                     </div>
                 `;
                 return;
             }
             
-            // Générer l'affichage pour chaque bureau
             let htmlContent = '';
             
             filteredData.forEach(bureau => {
-                // Calculer les statistiques du bureau
                 const tauxParticipation = bureau.inscrits > 0 ? (bureau.votants / bureau.inscrits * 100).toFixed(1) : 0;
                 const tauxAbstention = bureau.inscrits > 0 ? (bureau.abstentions / bureau.inscrits * 100).toFixed(1) : 0;
                 const tauxBlancsNuls = bureau.votants > 0 ? ((bureau.blancs + bureau.nuls) / bureau.votants * 100).toFixed(1) : 0;
-                const tauxExprimes = bureau.votants > 0 ? (bureau.exprimés / bureau.votants * 100).toFixed(1) : 0;
                 
-                // Trouver le gagnant
                 let winner = null;
                 if (bureau.candidates.length > 0) {
                     winner = bureau.candidates.reduce((prev, current) => 
@@ -1502,14 +1580,10 @@
                     );
                 }
                 
-                // Générer le HTML pour les candidats
                 let candidatesHTML = '';
-                
-                // Trier les candidats par nombre de voix (décroissant)
                 const sortedCandidates = [...bureau.candidates].sort((a, b) => b.voix - a.voix);
                 
                 sortedCandidates.forEach((candidate, index) => {
-                    // Filtrer par nom de candidat si un filtre est appliqué
                     if (currentCandidateFilter && 
                         !candidate.fullName.toLowerCase().includes(currentCandidateFilter) &&
                         !candidate.liste.toLowerCase().includes(currentCandidateFilter)) {
@@ -1525,7 +1599,7 @@
                                 <span class="candidate-color" style="background-color: ${colorPalette[index % colorPalette.length]}"></span>
                                 <span>
                                     <strong>${candidate.fullName}</strong><br>
-                                    <small>${candidate.liste} • ${candidate.nuance || 'Non renseigné'}</small>
+                                    <small>${candidate.liste} • ${candidate.nuance || 'NC'}</small>
                                 </span>
                             </div>
                             <div class="candidate-votes">
@@ -1538,7 +1612,6 @@
                     `;
                 });
                 
-                // Générer le HTML pour la carte du bureau
                 htmlContent += `
                     <div class="bureau-card">
                         <div class="bureau-header">
@@ -1546,7 +1619,7 @@
                                 📊 Bureau de Vote ${bureau.bureauCode}
                             </div>
                             <div style="color: #7f8c8d; font-size: 0.9em;">
-                                Code: ${bureau.communeCode}-${bureau.bureauCode}
+                                ${bureau.communeCode ? `Code: ${bureau.communeCode}` : ''}
                             </div>
                         </div>
                         
@@ -1583,7 +1656,6 @@
             
             detailedView.innerHTML = htmlContent;
             
-            // Ajouter un résumé en haut
             const summaryHTML = `
                 <div class="alert alert-info">
                     <h4>Résumé pour ${currentCommune}</h4>
@@ -1595,11 +1667,9 @@
             detailedView.insertAdjacentHTML('afterbegin', summaryHTML);
         }
         
-        // Appliquer les filtres avancés
         function applyAdvancedFilters(data) {
             let filteredData = [...data];
             
-            // Filtre par nuance politique
             const nuanceFilter = document.getElementById('filter-nuance').value;
             if (nuanceFilter) {
                 filteredData = filteredData.map(item => {
@@ -1610,7 +1680,6 @@
                 }).filter(item => item.candidates.length > 0);
             }
             
-            // Filtre par participation
             const participationMin = document.getElementById('filter-participation-min').value;
             const participationMax = document.getElementById('filter-participation-max').value;
             
@@ -1623,7 +1692,6 @@
                 });
             }
             
-            // Filtre par voix minimum
             const votesMin = document.getElementById('filter-votes-min').value;
             if (votesMin) {
                 const minVotes = parseInt(votesMin);
@@ -1635,7 +1703,6 @@
                 }).filter(item => item.candidates.length > 0);
             }
             
-            // Filtre par nom de candidat
             if (currentCandidateFilter) {
                 filteredData = filteredData.map(item => {
                     const filteredCandidates = item.candidates.filter(candidate => 
@@ -1649,14 +1716,11 @@
             return filteredData;
         }
         
-        // Préparer les données pour le graphique des résultats par candidat
         function prepareChartData(data) {
-            // Agrégation des voix par candidat
             const candidateVotes = {};
             
             data.forEach(item => {
                 item.candidates.forEach(candidate => {
-                    // Filtrer par nom de candidat si un filtre est appliqué
                     if (currentCandidateFilter && 
                         !candidate.fullName.toLowerCase().includes(currentCandidateFilter) &&
                         !candidate.liste.toLowerCase().includes(currentCandidateFilter)) {
@@ -1681,27 +1745,21 @@
                 });
             });
             
-            // Convertir en tableau et trier par nombre de voix
             const candidatesArray = Object.values(candidateVotes).sort((a, b) => b.totalVoix - a.totalVoix);
             
-            // Calculer les pourcentages moyens
             candidatesArray.forEach(candidate => {
                 candidate.avgPourcent = candidate.count > 0 ? candidate.totalPourcent / candidate.count : 0;
             });
             
-            // Limiter à 10 candidats maximum pour la lisibilité
             const topCandidates = candidatesArray.slice(0, 10);
             
-            // Créer ou mettre à jour le graphique
             const ctx = document.getElementById('results-chart').getContext('2d');
             
             if (resultsChart) {
                 resultsChart.destroy();
             }
             
-            // Préparer les données pour le graphique
             const labels = topCandidates.map(c => {
-                // Limiter la longueur du libellé pour une meilleure lisibilité
                 const name = c.fullName.length > 20 ? c.fullName.substring(0, 20) + '...' : c.fullName;
                 return `${name} (${c.liste.substring(0, 15)}${c.liste.length > 15 ? '...' : ''})`;
             });
@@ -1725,9 +1783,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -1742,28 +1798,15 @@
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Nombre de voix'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
+                        y: { beginAtZero: true, title: { display: true, text: 'Nombre de voix' } },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
                     }
                 }
             });
             
-            // Mettre à jour la légende
             updateChartLegendForCandidates(topCandidates);
         }
         
-        // Mettre à jour la légende du graphique
         function updateChartLegendForCandidates(candidates) {
             const legendContainer = document.getElementById('chart-legend');
             legendContainer.innerHTML = '';
@@ -1776,12 +1819,10 @@
                     <span>${candidate.fullName}</span>
                 `;
                 
-                // Ajouter un événement pour masquer/afficher la série
                 legendItem.addEventListener('click', function() {
                     this.classList.toggle('hidden');
                     const isHidden = this.classList.contains('hidden');
                     
-                    // Masquer/afficher la série dans le graphique
                     if (resultsChart) {
                         resultsChart.data.datasets[0].backgroundColor[index] = isHidden 
                             ? 'rgba(200, 200, 200, 0.2)' 
@@ -1797,14 +1838,11 @@
             });
         }
         
-        // Mettre à jour la légende
         function updateChartLegend(data) {
-            // Cette fonction peut être étendue pour d'autres types de légendes
+            // Placeholder pour d'autres légendes si nécessaire
         }
         
-        // Préparer le graphique de participation par bureau
         function prepareParticipationChart(data) {
-            // Trier les bureaux par code
             const sortedData = [...data].sort((a, b) => a.bureauCode - b.bureauCode);
             
             const ctx = document.getElementById('participation-chart').getContext('2d');
@@ -1845,45 +1883,25 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
-                    },
+                    plugins: { legend: { position: 'top', } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            title: {
-                                display: true,
-                                text: 'Pourcentage (%)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Bureau de vote'
-                            }
-                        }
+                        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Pourcentage (%)' } },
+                        x: { title: { display: true, text: 'Bureau de vote' } }
                     }
                 }
             });
         }
         
-        // Mettre à jour le tableau des résultats détaillés
         function updateResultsTable(data) {
             const tableBody = document.getElementById('results-table-body');
             tableBody.innerHTML = '';
             
-            // Trier les données par bureau
             const sortedData = [...data].sort((a, b) => a.bureauCode - b.bureauCode);
             
             sortedData.forEach(item => {
-                // Calculer les taux pour ce bureau
                 const tauxParticipation = item.inscrits > 0 ? (item.votants / item.inscrits * 100).toFixed(1) : 0;
                 const tauxBlancsNuls = item.votants > 0 ? ((item.blancs + item.nuls) / item.votants * 100).toFixed(1) : 0;
                 
-                // Trouver le gagnant de ce bureau (celui avec le plus de voix)
                 let winner = null;
                 if (item.candidates.length > 0) {
                     winner = item.candidates.reduce((prev, current) => 
@@ -1891,9 +1909,7 @@
                     );
                 }
                 
-                // Ajouter une ligne pour chaque candidat
                 item.candidates.forEach((candidate, index) => {
-                    // Filtrer par nom de candidat si un filtre est appliqué
                     if (currentCandidateFilter && 
                         !candidate.fullName.toLowerCase().includes(currentCandidateFilter) &&
                         !candidate.liste.toLowerCase().includes(currentCandidateFilter)) {
@@ -1906,7 +1922,6 @@
                     const row = document.createElement('tr');
                     if (rowClass) row.className = rowClass;
                     
-                    // Pour le premier candidat, afficher les informations du bureau
                     if (index === 0) {
                         row.innerHTML = `
                             <td rowspan="${item.candidates.length}"><strong>Bureau ${item.bureauCode}</strong></td>
@@ -1941,21 +1956,16 @@
             });
         }
         
-        // Mettre à jour l'analyse avancée
         function updateAdvancedAnalysis(data) {
-            // Calculer le coefficient de Gini
             const gini = calculateGiniCoefficient(data);
             document.getElementById('gini-coefficient').textContent = gini;
             
-            // Calculer l'indice Herfindahl
             const herfindahl = calculateHerfindahlIndex(data);
             document.getElementById('herfindahl-index').textContent = herfindahl;
             
-            // Détecter les bureaux pivot
             const swingBureaus = detectSwingBureaus(data);
             document.getElementById('swing-bureaus').textContent = swingBureaus.length;
             
-            // Analyser les tendances de participation
             const trends = calculateParticipationTrend(data);
             if (trends) {
                 document.getElementById('participation-trend').textContent = `${trends.average}%`;
@@ -1964,11 +1974,9 @@
                 trendLabel.className = `trend ${trends.average > 50 ? 'up' : 'down'}`;
             }
             
-            // Mettre à jour le graphique des tendances
             updateTrendsChart(data);
         }
         
-        // Calculer le coefficient de Gini
         function calculateGiniCoefficient(data) {
             const allVotes = [];
             data.forEach(item => {
@@ -1995,7 +2003,6 @@
             return gini.toFixed(3);
         }
         
-        // Calculer l'indice Herfindahl
         function calculateHerfindahlIndex(data) {
             let totalVotes = 0;
             const candidateVotes = {};
@@ -2021,7 +2028,6 @@
             return herfindahl.toFixed(3);
         }
         
-        // Détecter les bureaux pivot
         function detectSwingBureaus(data) {
             const swingBureaus = [];
             
@@ -2048,7 +2054,6 @@
             return swingBureaus;
         }
         
-        // Calculer les tendances de participation
         function calculateParticipationTrend(data) {
             if (data.length < 2) return null;
             
@@ -2069,7 +2074,6 @@
             };
         }
         
-        // Mettre à jour le graphique des tendances
         function updateTrendsChart(data) {
             const ctx = document.getElementById('trends-chart').getContext('2d');
             
@@ -2077,7 +2081,6 @@
                 trendsChart.destroy();
             }
             
-            // Trier les bureaux par participation
             const sortedData = [...data].sort((a, b) => {
                 const partA = a.inscrits > 0 ? (a.votants / a.inscrits * 100) : 0;
                 const partB = b.inscrits > 0 ? (b.votants / b.inscrits * 100) : 0;
@@ -2106,32 +2109,15 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
-                    },
+                    plugins: { legend: { position: 'top', } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            title: {
-                                display: true,
-                                text: 'Participation (%)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Bureaux de vote (triés par participation)'
-                            }
-                        }
+                        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Participation (%)' } },
+                        x: { title: { display: true, text: 'Bureaux de vote (triés par participation)' } }
                     }
                 }
             });
         }
         
-        // Générer des alertes intelligentes
         function generateSmartAlerts(data) {
             const alertsContainer = document.getElementById('smart-alerts');
             alertsContainer.innerHTML = '';
@@ -2141,7 +2127,6 @@
             data.forEach(item => {
                 const participation = item.inscrits > 0 ? (item.votants / item.inscrits * 100) : 0;
                 
-                // Participation anormalement basse
                 if (participation < 30) {
                     alerts.push({
                         type: 'warning',
@@ -2150,7 +2135,6 @@
                     });
                 }
                 
-                // Taux de bulletins blancs/nuls élevé
                 const blancsNulsRate = item.votants > 0 ? ((item.blancs + item.nuls) / item.votants * 100) : 0;
                 if (blancsNulsRate > 10) {
                     alerts.push({
@@ -2160,7 +2144,6 @@
                     });
                 }
                 
-                // Victoire écrasante
                 if (item.candidates.length > 0) {
                     const sortedCandidates = [...item.candidates].sort((a, b) => b.voix - a.voix);
                     const totalVoix = sortedCandidates.reduce((sum, c) => sum + c.voix, 0);
@@ -2175,7 +2158,6 @@
                 }
             });
             
-            // Limiter à 5 alertes maximum
             const displayAlerts = alerts.slice(0, 5);
             
             displayAlerts.forEach(alert => {
@@ -2193,7 +2175,6 @@
             }
         }
         
-        // Exécuter une comparaison entre communes
         function runComparison(commune1, commune2) {
             const commune1Data = allData.filter(item => item.communeName === commune1);
             const commune2Data = allData.filter(item => item.communeName === commune2);
@@ -2206,11 +2187,9 @@
                 return;
             }
             
-            // Calculer les statistiques pour chaque commune
             const stats1 = calculateCommuneStats(commune1Data);
             const stats2 = calculateCommuneStats(commune2Data);
             
-            // Créer le tableau de comparaison
             const comparisonTable = document.createElement('table');
             comparisonTable.className = 'table-container';
             comparisonTable.innerHTML = `
@@ -2258,7 +2237,6 @@
             
             resultsContainer.appendChild(comparisonTable);
             
-            // Ajouter une analyse qualitative
             const analysisDiv = document.createElement('div');
             analysisDiv.className = 'alert alert-info';
             analysisDiv.innerHTML = `
@@ -2270,7 +2248,6 @@
             trackUsage('comparison_run', { commune1, commune2 });
         }
         
-        // Calculer les statistiques d'une commune
         function calculateCommuneStats(data) {
             let totalInscrits = 0;
             let totalVotants = 0;
@@ -2306,11 +2283,9 @@
             };
         }
         
-        // Générer une analyse qualitative de la comparaison
         function generateComparisonAnalysis(stats1, stats2, commune1, commune2) {
             let analysis = "";
             
-            // Comparaison de la participation
             if (Math.abs(stats1.participationMoyenne - stats2.participationMoyenne) > 5) {
                 if (stats1.participationMoyenne > stats2.participationMoyenne) {
                     analysis += `${commune1} a une participation significativement plus élevée que ${commune2} (${stats1.participationMoyenne}% vs ${stats2.participationMoyenne}%). `;
@@ -2321,17 +2296,14 @@
                 analysis += `Les deux communes ont des taux de participation similaires. `;
             }
             
-            // Comparaison des abstentions
             if (Math.abs(stats1.abstentionMoyenne - stats2.abstentionMoyenne) > 5) {
                 analysis += `L'abstention est ${stats1.abstentionMoyenne > stats2.abstentionMoyenne ? 'plus élevée' : 'plus basse'} à ${commune1}. `;
             }
             
-            // Comparaison des bulletins blancs/nuls
             if (Math.abs(stats1.blancsNulsMoyen - stats2.blancsNulsMoyen) > 2) {
                 analysis += `Le taux de bulletins blancs/nuls est ${stats1.blancsNulsMoyen > stats2.blancsNulsMoyen ? 'plus important' : 'moins important'} à ${commune1}. `;
             }
             
-            // Comparaison de la taille électorale
             if (stats1.inscrits > stats2.inscrits * 1.5) {
                 analysis += `${commune1} est significativement plus grande que ${commune2} en nombre d'électeurs. `;
             } else if (stats2.inscrits > stats1.inscrits * 1.5) {
@@ -2341,7 +2313,6 @@
             return analysis || "Les deux communes présentent des caractéristiques électorales similaires.";
         }
         
-        // Exporter vers Excel
         function exportToExcel() {
             if (!currentCommune) {
                 alert('Veuillez d\'abord sélectionner une commune');
@@ -2349,14 +2320,12 @@
             }
             
             try {
-                // Filtrer les données actuelles
                 let filteredData = allData.filter(item => item.communeName === currentCommune);
                 
                 if (currentBureau !== 'all') {
                     filteredData = filteredData.filter(item => item.bureauCode === currentBureau);
                 }
                 
-                // Transformer les données pour l'export
                 const exportData = [];
                 
                 filteredData.forEach(item => {
@@ -2378,15 +2347,12 @@
                     });
                 });
                 
-                // Créer une feuille Excel
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Résultats");
                 
-                // Générer le nom du fichier
                 const fileName = `resultats-${currentCommune.replace(/\s+/g, '-').toLowerCase()}-${currentBureau === 'all' ? 'tous-bureaux' : 'bureau-' + currentBureau}-${new Date().toISOString().slice(0,10)}.xlsx`;
                 
-                // Télécharger le fichier
                 XLSX.writeFile(wb, fileName);
                 
                 trackUsage('export_completed', { 
@@ -2401,7 +2367,6 @@
             }
         }
         
-        // Track usage analytics
         function trackUsage(action, details = {}) {
             const usageData = {
                 action,
@@ -2412,19 +2377,13 @@
                 commune: currentCommune,
                 bureau: currentBureau
             };
-            
-            // Enregistrer dans la console (à remplacer par votre service d'analytics)
             console.log('Usage tracked:', usageData);
         }
         
-        // Initialiser l'application au chargement de la page
         document.addEventListener('DOMContentLoaded', initApp);
         
-        // Ajouter un message d'avertissement si XLSX n'est pas chargé
         if (typeof XLSX === 'undefined') {
             console.warn('La bibliothèque XLSX n\'est pas chargée. L\'export Excel ne fonctionnera pas.');
-            
-            // Charger XLSX dynamiquement si nécessaire
             document.getElementById('export-btn').addEventListener('click', function() {
                 if (typeof XLSX === 'undefined') {
                     alert('La fonction d\'export Excel nécessite la bibliothèque XLSX. Veuillez l\'inclure dans votre page.');
@@ -2433,7 +2392,6 @@
         }
     </script>
     
-    <!-- Inclure la bibliothèque SheetJS pour l'export Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
 </html>
