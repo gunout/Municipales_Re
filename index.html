@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyseur Élections Municipales (2008, 2014, 2020)</title>
+    <title>Analyseur Élections Municipales (2008, 2014, 2020, 2026)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -689,16 +689,16 @@
 <body>
     <div class="container">
         <h1>📊 Analyseur Multi-Format Élections Municipales</h1>
-        <div class="subtitle">Compatible fichiers 2008, 2014 et 2020 (format ministériel)</div>
+        <div class="subtitle">Compatible fichiers 2008, 2014, 2020 et 2026 (format CSV élections)</div>
         
         <!-- Zone de téléchargement de fichier -->
         <div class="file-upload" id="file-upload-area">
-            <input type="file" id="file-input" accept=".txt,.csv">
+            <input type="file" id="file-input" accept=".txt,.csv,.tsv">
             <label for="file-input">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Cliquez pour sélectionner votre fichier de résultats</div>
-                <div class="upload-subtext">Formats supportés : Fichiers résultats par bureau de vote (.txt)</div>
-                <div class="upload-subtext">(Détecte automatiquement les formats 2008, 2014, 2020)</div>
+                <div class="upload-subtext">Formats supportés : Fichiers résultats 2008/2014/2020 (.txt) et 2026 (.csv)</div>
+                <div class="upload-subtext">(Détecte automatiquement les formats)</div>
             </label>
             <div class="file-name" id="file-name-display">Aucun fichier sélectionné</div>
         </div>
@@ -779,7 +779,7 @@
             
             <div class="control-group">
                 <label for="candidate-filter">👥 Filtre candidat (optionnel) :</label>
-                    <input type="text" id="candidate-filter" placeholder="Nom du candidat...">
+                <input type="text" id="candidate-filter" placeholder="Nom du candidat...">
             </div>
         </div>
         
@@ -922,7 +922,7 @@
         
         <div id="no-data" class="no-data">
             <p>Chargez un fichier de résultats pour commencer l'analyse.</p>
-            <p>Formats supportés : Fichiers résultats par bureau (.txt) - 2008, 2014, 2020.</p>
+            <p>Formats supportés : Fichiers résultats 2008/2014/2020 (.txt) et 2026 (.csv).</p>
         </div>
         
         <!-- Alertes contextuelles -->
@@ -932,7 +932,7 @@
         
         <div class="footer">
             <p>Analyseur Multi-Format Élections Municipales | Développé avec HTML, CSS et JavaScript</p>
-            <p>© 2024 - Outil d'analyse électorale avancée</p>
+            <p>© 2024 - 2026 - Outil d'analyse électorale avancée</p>
         </div>
     </div>
 
@@ -951,6 +951,34 @@
             '#27ae60', '#f1c40f', '#e67e22', '#95a5a6', '#7f8c8d',
             '#34495e', '#7f8c8d'
         ];
+        
+        // Dictionnaire des départements pour améliorer l'affichage des noms
+        const departements = {
+            '01': 'Ain', '02': 'Aisne', '03': 'Allier', '04': 'Alpes-de-Haute-Provence',
+            '05': 'Hautes-Alpes', '06': 'Alpes-Maritimes', '07': 'Ardèche', '08': 'Ardennes',
+            '09': 'Ariège', '10': 'Aube', '11': 'Aude', '12': 'Aveyron', '13': 'Bouches-du-Rhône',
+            '14': 'Calvados', '15': 'Cantal', '16': 'Charente', '17': 'Charente-Maritime',
+            '18': 'Cher', '19': 'Corrèze', '2A': 'Corse-du-Sud', '2B': 'Haute-Corse',
+            '21': "Côte-d'Or", '22': "Côtes-d'Armor", '23': 'Creuse', '24': 'Dordogne',
+            '25': 'Doubs', '26': 'Drôme', '27': 'Eure', '28': 'Eure-et-Loir', '29': 'Finistère',
+            '30': 'Gard', '31': 'Haute-Garonne', '32': 'Gers', '33': 'Gironde', '34': 'Hérault',
+            '35': 'Ille-et-Vilaine', '36': 'Indre', '37': 'Indre-et-Loire', '38': 'Isère',
+            '39': 'Jura', '40': 'Landes', '41': 'Loir-et-Cher', '42': 'Loire', '43': 'Haute-Loire',
+            '44': 'Loire-Atlantique', '45': 'Loiret', '46': 'Lot', '47': 'Lot-et-Garonne',
+            '48': 'Lozère', '49': 'Maine-et-Loire', '50': 'Manche', '51': 'Marne', '52': 'Haute-Marne',
+            '53': 'Mayenne', '54': 'Meurthe-et-Moselle', '55': 'Meuse', '56': 'Morbihan',
+            '57': 'Moselle', '58': 'Nièvre', '59': 'Nord', '60': 'Oise', '61': 'Orne',
+            '62': 'Pas-de-Calais', '63': 'Puy-de-Dôme', '64': 'Pyrénées-Atlantiques',
+            '65': 'Hautes-Pyrénées', '66': 'Pyrénées-Orientales', '67': 'Bas-Rhin', '68': 'Haut-Rhin',
+            '69': 'Rhône', '70': 'Haute-Saône', '71': 'Saône-et-Loire', '72': 'Sarthe',
+            '73': 'Savoie', '74': 'Haute-Savoie', '75': 'Paris', '76': 'Seine-Maritime',
+            '77': 'Seine-et-Marne', '78': 'Yvelines', '79': 'Deux-Sèvres', '80': 'Somme',
+            '81': 'Tarn', '82': 'Tarn-et-Garonne', '83': 'Var', '84': 'Vaucluse', '85': 'Vendée',
+            '86': 'Vienne', '87': 'Haute-Vienne', '88': 'Vosges', '89': 'Yonne', '90': 'Territoire de Belfort',
+            '91': 'Essonne', '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis', '94': 'Val-de-Marne',
+            '95': "Val-d'Oise", '971': 'Guadeloupe', '972': 'Martinique', '973': 'Guyane',
+            '974': 'La Réunion', '976': 'Mayotte'
+        };
         
         // Initialisation de l'application
         function initApp() {
@@ -1045,7 +1073,7 @@
                         document.getElementById('no-data').style.display = 'block';
                         document.getElementById('no-data').innerHTML = `
                             <p>✅ Fichier chargé avec succès !</p>
-                            <p>${allData.length} bureaux de vote analysés.</p>
+                            <p>${allData.length} entrées analysées.</p>
                             <p>Sélectionnez une commune dans la liste ci-dessus pour voir les résultats.</p>
                         `;
                         
@@ -1077,18 +1105,18 @@
                 `;
             };
             
-            reader.readAsText(file);
+            reader.readAsText(file, 'ISO-8859-1'); // Important pour les accents
         }
         
         /**
          * FONCTION PRINCIPALE DE PARSING
-         * Détecte et parse les formats 2008, 2014 et 2020
+         * Détecte et parse les formats 2008, 2014, 2020 et 2026
          */
         function parseData(rawText) {
             const lines = rawText.split('\n');
             if (lines.length < 2) return [];
 
-            // 1. Détection du délimiteur (Tab, Point-virgule, Virgule)
+            // 1. Détection du délimiteur
             const firstLine = lines[0];
             let delimiter = '\t';
             
@@ -1102,7 +1130,19 @@
                 delimiter = ',';
             }
 
-            const headers = lines[0].split(delimiter).map(h => h.trim());
+            const headers = lines[0].split(delimiter).map(h => h.replace(/"/g, '').trim());
+            
+            // Détection du format 2026 (basé sur les colonnes fournies)
+            const is2026Format = headers.includes('NOMPSN') && 
+                               headers.includes('PREPSN') && 
+                               headers.includes('CODCOM') &&
+                               headers.includes('CODE_NUANCE_DE_LISTE');
+            
+            if (is2026Format) {
+                return parse2026Format(lines, delimiter, headers);
+            }
+            
+            // Sinon, on utilise les parseurs existants
             const dataLines = lines.slice(1);
 
             // Fonction helper pour trouver l'index d'une colonne par nom
@@ -1124,8 +1164,6 @@
             const idxVoix = findCol(['Voix', 'Nombre de voix']);
             
             // Heuristique pour déterminer le type de format
-            // Les formats historiques (2008/2014) ont "N° tour" ou "Date de l'export" 
-            // et sont en format "long" (1 ligne = 1 candidat)
             const isHistoricalFormat = (findCol(['N° tour']) !== -1 || findCol(['Date de l\'export']) !== -1);
 
             if (isHistoricalFormat) {
@@ -1137,6 +1175,137 @@
                 // Format 2020 (Tabulaire large)
                 return parseTabular2020Format(dataLines, delimiter, headers);
             }
+        }
+
+        // Parseur pour le format 2026 (élections municipales)
+        function parse2026Format(lines, delimiter, headers) {
+            const parsedData = [];
+            
+            // Créer un mapping des indices de colonnes
+            const colIndex = {
+                nom: headers.indexOf('NOMPSN'),
+                prenom: headers.indexOf('PREPSN'),
+                dateNaissance: headers.indexOf('DATNAIPSN'),
+                sexe: headers.indexOf('SEXPSN'),
+                codePro: headers.indexOf('CODPRO'),
+                effectif: headers.indexOf('EFFECTIF_LEGAL'),
+                codeDpt: headers.indexOf('CODDPT'),
+                codeCom: headers.indexOf('CODCOM'),
+                indEluEPCI: headers.indexOf('IND_ELU_EPCI'),
+                nuance: headers.indexOf('CODE_NUANCE_DE_LISTE'),
+                codePerso: headers.indexOf('CODE_PERSONNALITE'),
+                tour: headers.indexOf('TOUR_ELECTION')
+            };
+            
+            // Vérifier que les colonnes essentielles existent
+            if (colIndex.nom === -1 || colIndex.prenom === -1 || colIndex.codeCom === -1) {
+                console.error('Format 2026 incomplet');
+                return [];
+            }
+            
+            // Grouper par commune (code département + code commune)
+            const communeGroups = {};
+            
+            // D'abord, on parcourt toutes les lignes pour calculer le total des inscrits par commune
+            const communeInscrits = {};
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '') continue;
+                
+                const cols = line.split(delimiter).map(c => c.replace(/"/g, '').trim());
+                
+                const codeCom = cols[colIndex.codeCom] || '';
+                const codeDpt = cols[colIndex.codeDpt] || '';
+                const effectif = colIndex.effectif !== -1 ? parseInt(cols[colIndex.effectif]) || 0 : 0;
+                
+                const key = `${codeDpt}-${codeCom}`;
+                
+                if (!communeInscrits[key]) {
+                    communeInscrits[key] = 0;
+                }
+                communeInscrits[key] += effectif;
+            }
+            
+            // Ensuite, on regroupe les candidats par commune
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '') continue;
+                
+                const cols = line.split(delimiter).map(c => c.replace(/"/g, '').trim());
+                
+                const nom = cols[colIndex.nom] || '';
+                const prenom = cols[colIndex.prenom] || '';
+                const codeCom = cols[colIndex.codeCom] || '';
+                const codeDpt = cols[colIndex.codeDpt] || '';
+                const nuance = colIndex.nuance !== -1 ? (cols[colIndex.nuance] || '') : '';
+                const tour = colIndex.tour !== -1 ? (cols[colIndex.tour] || 'T1') : 'T1';
+                const effectif = colIndex.effectif !== -1 ? parseInt(cols[colIndex.effectif]) || 0 : 0;
+                
+                // Créer un nom de commune plus lisible à partir des codes
+                const nomDepartement = departements[codeDpt] || `Département ${codeDpt}`;
+                const communeName = `Commune ${codeDpt}-${codeCom} (${nomDepartement})`;
+                
+                const bureauCode = '001'; // Pas de bureau dans ce format, on utilise un défaut
+                const key = `${codeDpt}-${codeCom}`;
+                
+                if (!communeGroups[key]) {
+                    communeGroups[key] = {
+                        communeName: communeName,
+                        communeCode: codeCom,
+                        departement: codeDpt,
+                        nomDepartement: nomDepartement,
+                        bureauCode: bureauCode,
+                        inscrits: communeInscrits[key] || 0,
+                        votants: communeInscrits[key] || 0, // On suppose que tous les inscrits ont voté pour les élus
+                        abstentions: 0,
+                        blancs: 0,
+                        nuls: 0,
+                        exprimes: communeInscrits[key] || 0,
+                        candidates: [],
+                        isElection2026: true,
+                        totalInscrits: communeInscrits[key] || 0
+                    };
+                }
+                
+                // Vérifier si le candidat est élu (présence de "élu" dans TOUR_ELECTION)
+                const estElu = tour.toLowerCase().includes('elu');
+                
+                // Ajouter le candidat
+                const fullName = `${prenom} ${nom}`.trim();
+                
+                // Dans ce format, une ligne = un candidat (souvent élu)
+                // On utilise l'effectif comme base pour le nombre de voix
+                const voix = effectif || 1; // Au moins 1 voix pour apparaître
+                
+                communeGroups[key].candidates.push({
+                    fullName: fullName,
+                    nom: nom,
+                    prenom: prenom,
+                    liste: nuance || 'Sans étiquette', // La nuance sert de nom de liste
+                    nuance: nuance || 'DIV',
+                    voix: voix,
+                    estElu: estElu,
+                    tour: tour,
+                    pourcentInscrits: 0,
+                    pourcentExprimes: 0
+                });
+            }
+            
+            // Convertir en tableau et calculer les pourcentages
+            const result = Object.values(communeGroups);
+            
+            result.forEach(item => {
+                // Trier les candidats par nombre de voix (décroissant)
+                item.candidates.sort((a, b) => b.voix - a.voix);
+                
+                item.candidates.forEach(c => {
+                    c.pourcentInscrits = item.inscrits > 0 ? (c.voix / item.inscrits * 100) : 0;
+                    c.pourcentExprimes = item.exprimes > 0 ? (c.voix / item.exprimes * 100) : 0;
+                });
+            });
+            
+            return result;
         }
 
         // Parseur pour les formats 2008/2014 (Format Long)
@@ -1177,7 +1346,6 @@
                 
                 if (nom || prenom) {
                     const fullName = `${prenom} ${nom}`.trim();
-                    // Si pas de liste explicite, on utilise le nom du candidat
                     const liste = listeName || fullName; 
                     
                     tempData[key].candidates.push({
@@ -1197,17 +1365,14 @@
             const parsedData = Object.values(tempData);
 
             parsedData.forEach(item => {
-                // Vérifier la cohérence des exprimés
                 const totalVoix = item.candidates.reduce((sum, c) => sum + c.voix, 0);
-                // On privilégie le total des voix par rapport au fichier, sauf si écart flagrant
-                if (totalVoix > 0 && Math.abs(totalVoix - item.exprimés) > totalVoix * 0.1) {
-                     // Si écart > 10%, on met à jour les exprimés avec la somme des voix
-                     item.exprimés = totalVoix;
+                if (totalVoix > 0 && Math.abs(totalVoix - item.exprimes) > totalVoix * 0.1) {
+                     item.exprimes = totalVoix;
                 }
 
                 item.candidates.forEach(c => {
                     c.pourcentInscrits = item.inscrits > 0 ? (c.voix / item.inscrits * 100) : 0;
-                    c.pourcentExprimes = item.exprimés > 0 ? (c.voix / item.exprimés * 100) : 0;
+                    c.pourcentExprimes = item.exprimes > 0 ? (c.voix / item.exprimes * 100) : 0;
                 });
             });
 
@@ -1222,7 +1387,6 @@
                 const columns = line.split(delimiter);
                 if (columns.length < 20) return; 
 
-                // Structure 2020 standard (approximative basée sur l'ancien code)
                 const communeCode = columns[2] || '';
                 const communeName = columns[3] || '';
                 const bureauCode = columns[4] || '';
@@ -1234,9 +1398,6 @@
                 const exprimes = parseInt(columns[16]) || 0;
 
                 const candidates = [];
-                // Blocs de candidats commencent souvent après l'index 16-19
-                // On cherche dynamiquement "Nom du candidat" ou on utilise une logique de blocs
-                // Ici on essaie de trouver l'index du premier candidat
                 let startCandidateIndex = -1;
                 for(let i=0; i<columns.length; i++) {
                      if (columns[i] && (columns[i].includes('Nom') || columns[i].includes('Candidat'))) {
@@ -1245,10 +1406,8 @@
                      }
                 }
                 
-                // Si on ne trouve pas l'en-tête candidat, on tente l'approche par bloc (ancienne méthode)
                 if (startCandidateIndex === -1) startCandidateIndex = 19;
 
-                // On itère par pas de 9 (Structure typique 2020)
                 for (let i = 0; i < 10; i++) {
                     const idxNom = startCandidateIndex + 3; 
                     const idxPrenom = startCandidateIndex + 4;
@@ -1274,11 +1433,6 @@
                             });
                         }
                     }
-                    // Incrément pour le candidat suivant (bloc de 9)
-                    // Note: Si les colonnes ne sont pas strictement alignées, cette logique peut échouer.
-                    // Une approche plus robuste serait de scanner toutes les colonnes au-delà d'un point.
-                    // Pour simplifier et conserver la compatibilité avec le code initial, on garde le pas de 9.
-                    // Si on détecte que la ligne suivante contient "Nom", on réinitialise l'index (cas rare)
                     startCandidateIndex += 9;
                 }
 
@@ -1296,11 +1450,10 @@
                 });
             });
             
-            // Calculer les pourcentages
             parsedData.forEach(item => {
                  item.candidates.forEach(c => {
                     c.pourcentInscrits = item.inscrits > 0 ? (c.voix / item.inscrits * 100) : 0;
-                    c.pourcentExprimes = item.exprimés > 0 ? (c.voix / item.exprimés * 100) : 0;
+                    c.pourcentExprimes = item.exprimes > 0 ? (c.voix / item.exprimes * 100) : 0;
                 });
             });
 
@@ -1362,8 +1515,8 @@
             toggleBtn.addEventListener('click', function() {
                 filtersDiv.classList.toggle('show');
                 this.textContent = filtersDiv.classList.contains('show') 
-                    ? 'Masquer les filtres avancés ▼' 
-                    : 'Afficher les filtres avancés ▶';
+                    ? '⚙️ Masquer les filtres avancés' 
+                    : '⚙️ Afficher les filtres avancés';
                 trackUsage('advanced_filters_toggled', { show: filtersDiv.classList.contains('show') });
             });
             
@@ -1512,7 +1665,7 @@
             
             document.getElementById('commune-name').textContent = currentCommune;
             document.getElementById('commune-info').textContent = currentBureau === 'all' 
-                ? `Résultats pour tous les bureaux de vote (${filteredData.length} bureau(s))`
+                ? `Résultats pour tous les bureaux de vote (${filteredData.length} bureau(x))`
                 : `Résultats pour le bureau de vote ${currentBureau}`;
             
             let totalInscrits = 0;
@@ -1528,7 +1681,7 @@
                 totalAbstentions += item.abstentions;
                 totalBlancs += item.blancs;
                 totalNuls += item.nuls;
-                totalExprimes += item.exprimés;
+                totalExprimes += item.exprimes;
             });
             
             const tauxParticipation = totalInscrits > 0 ? (totalVotants / totalInscrits * 100).toFixed(1) : 0;
@@ -1593,12 +1746,15 @@
                     const isWinner = winner && candidate.fullName === winner.fullName;
                     const candidateClass = isWinner ? 'candidate-result winner' : 'candidate-result';
                     
+                    // Ajouter un badge "ÉLU" si le candidat est élu (format 2026)
+                    const eluBadge = candidate.estElu ? ' 🏆 ÉLU' : '';
+                    
                     candidatesHTML += `
                         <div class="${candidateClass}">
                             <div class="candidate-name">
                                 <span class="candidate-color" style="background-color: ${colorPalette[index % colorPalette.length]}"></span>
                                 <span>
-                                    <strong>${candidate.fullName}</strong><br>
+                                    <strong>${candidate.fullName}${eluBadge}</strong><br>
                                     <small>${candidate.liste} • ${candidate.nuance || 'NC'}</small>
                                 </span>
                             </div>
@@ -1617,9 +1773,11 @@
                         <div class="bureau-header">
                             <div class="bureau-title">
                                 📊 Bureau de Vote ${bureau.bureauCode}
+                                ${bureau.isElection2026 ? ' <span style="color: #2ecc71; font-size: 0.8rem;">(Élections 2026)</span>' : ''}
                             </div>
                             <div style="color: #7f8c8d; font-size: 0.9em;">
                                 ${bureau.communeCode ? `Code: ${bureau.communeCode}` : ''}
+                                ${bureau.departement ? ` • ${bureau.departement}` : ''}
                             </div>
                         </div>
                         
@@ -1648,6 +1806,7 @@
                         ${winner ? `
                             <div class="alert alert-success" style="margin-top: 15px;">
                                 <strong>🏆 Gagnant du bureau :</strong> ${winner.fullName} avec ${winner.voix.toLocaleString()} voix (${winner.pourcentExprimes.toFixed(1)}% des exprimés)
+                                ${winner.estElu ? ' <span style="color: #2ecc71;">✓ Élu</span>' : ''}
                             </div>
                         ` : ''}
                     </div>
@@ -1931,7 +2090,7 @@
                             <td rowspan="${item.candidates.length}">${tauxBlancsNuls}%</td>
                             <td>
                                 <div class="candidate-color" style="background-color: ${colorPalette[index % colorPalette.length]}"></div>
-                                ${candidate.fullName}<br>
+                                ${candidate.fullName}${candidate.estElu ? ' 🏆' : ''}<br>
                                 <small>${candidate.liste}</small>
                             </td>
                             <td>${candidate.voix.toLocaleString()}</td>
@@ -1942,7 +2101,7 @@
                         row.innerHTML = `
                             <td>
                                 <div class="candidate-color" style="background-color: ${colorPalette[index % colorPalette.length]}"></div>
-                                ${candidate.fullName}<br>
+                                ${candidate.fullName}${candidate.estElu ? ' 🏆' : ''}<br>
                                 <small>${candidate.liste}</small>
                             </td>
                             <td>${candidate.voix.toLocaleString()}</td>
@@ -2262,7 +2421,7 @@
                 totalAbstentions += item.abstentions;
                 totalBlancs += item.blancs;
                 totalNuls += item.nuls;
-                totalExprimes += item.exprimés;
+                totalExprimes += item.exprimes;
             });
             
             const participationMoyenne = totalInscrits > 0 ? (totalVotants / totalInscrits * 100).toFixed(1) : 0;
@@ -2341,8 +2500,9 @@
                             Liste: candidate.liste,
                             Nuance: candidate.nuance,
                             Voix: candidate.voix,
-                            '% Exprimés': candidate.pourcentExprimes,
-                            '% Inscrits': candidate.pourcentInscrits
+                            '% Exprimés': candidate.pourcentExprimes.toFixed(1),
+                            '% Inscrits': candidate.pourcentInscrits.toFixed(1),
+                            'Élu': candidate.estElu ? 'Oui' : 'Non'
                         });
                     });
                 });
