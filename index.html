@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>MUNICIPALES 2026 · MOBILE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUNICIPALES 2026 · CARTE CENTRALE</title>
     <style>
         * {
             margin: 0;
@@ -14,264 +14,310 @@
         body {
             background: #0a0c1c;
             font-family: 'Share Tech Mono', 'Courier New', monospace;
-            min-height: 100vh;
-            padding: 12px;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* Layout mobile : tout en colonne */
-        .mobile-container {
+        /* Layout principal : carte CENTRALE, panneaux sur les côtés */
+        .main-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            gap: 16px;
+            padding: 16px;
+            background: #030514;
+        }
+
+        /* PANEL GAUCHE - fixe, ne cache pas la carte */
+        .left-panel {
+            width: 300px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            max-width: 100%;
-            margin: 0 auto;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 8px;
+            z-index: 10;
         }
 
-        /* CARTE EN PREMIER PLAN (visible immédiatement) */
-        .map-mobile {
-            width: 100%;
-            height: 45vh; /* Prend près de la moitié de l'écran */
-            min-height: 350px;
-            border-radius: 28px;
+        /* ZONE CARTE - au centre, bien visible */
+        .map-center {
+            flex: 1;
+            min-width: 0; /* important pour le flex */
+            border-radius: 32px;
             overflow: hidden;
             border: 3px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6), inset 0 0 15px rgba(255, 0, 128, 0.4);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(255, 0, 128, 0.4);
             background: #000;
-            order: 1; /* Premier élément */
+            z-index: 20;
         }
 
-        .map-mobile iframe {
+        .map-center iframe {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
         }
 
-        /* BANDEAU D'INFO COMPACT AU-DESSUS DE LA CARTE (optionnel) */
-        .mobile-header {
-            order: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(2, 12, 28, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid #00ffff;
-            border-radius: 60px;
-            padding: 12px 20px;
-            margin-bottom: 4px;
-        }
-
-        .glitch-small {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: white;
-            text-shadow: 0.05em 0 0 #ff0066, -0.05em -0.025em 0 #00ffff;
-            letter-spacing: 2px;
-        }
-
-        .pulse-mob {
-            width: 10px;
-            height: 10px;
-            background: #0ff;
-            border-radius: 50%;
-            box-shadow: 0 0 15px cyan;
-            animation: pulse 1.8s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* PANEL D'ANALYSES (défile sous la carte) */
-        .analysis-mobile {
-            order: 2;
+        /* PANEL DROIT - fixe, ne cache pas la carte */
+        .right-panel {
+            width: 320px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            width: 100%;
-            margin-top: 8px;
+            height: 100%;
+            overflow-y: auto;
+            padding-left: 8px;
+            z-index: 10;
         }
 
-        /* Cartes d'analyse compactes pour mobile */
-        .card-mobile {
+        /* STYLE DES CARTES D'ANALYSE (bleu-blanc-rouge néon) */
+        .card {
             background: rgba(2, 12, 28, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid #00f7ff;
             border-radius: 28px;
-            padding: 18px 16px;
+            padding: 20px 18px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 60, 120, 0.3) inset;
         }
 
-        .card-title-mob {
+        .card-title {
             color: #ffb0d0;
-            font-size: 0.95rem;
+            font-size: 1rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             border-left: 4px solid #ff0066;
-            padding-left: 12px;
-            margin-bottom: 14px;
+            padding-left: 14px;
+            margin-bottom: 18px;
             font-weight: bold;
         }
 
-        /* Grilles adaptatives */
-        .stats-row-mob {
+        /* Stats chiffres */
+        .stat-block {
             display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: space-between;
+            flex-direction: column;
+            margin-bottom: 15px;
         }
-
-        .stat-block-mob {
-            flex: 1 1 40%;
-            min-width: 120px;
-        }
-
-        .big-value-mob {
-            font-size: 2.2rem;
+        .big-value {
+            font-size: 2.8rem;
             font-weight: 800;
             background: linear-gradient(135deg, #fff, #00ffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             line-height: 1;
         }
-
-        .stat-label-mob {
+        .stat-label {
             color: #88aaff;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .trend-mob {
             font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .trend {
+            font-size: 0.85rem;
             color: #88ff88;
         }
 
-        /* Barres de progression compactes */
-        .progress-item-mob {
-            margin: 10px 0;
+        /* Barres de progression */
+        .progress-item {
+            margin: 14px 0;
         }
-        .progress-label-mob {
+        .progress-label {
             display: flex;
             justify-content: space-between;
             color: #b0d0ff;
-            font-size: 0.8rem;
-            margin-bottom: 3px;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
         }
-        .progress-bg-mob {
-            height: 16px;
+        .progress-bg {
+            height: 20px;
             background: #111f33;
             border-radius: 30px;
             overflow: hidden;
             border: 1px solid #3399ff;
         }
-        .progress-fill-mob {
+        .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #0066ff, #ff0066);
             border-radius: 30px;
-            box-shadow: 0 0 10px #00aaff;
+            box-shadow: 0 0 15px #00aaff;
         }
 
-        /* Grille 2x2 pour mobile */
-        .grid-2-mob {
+        /* Grille pour zones de tension */
+        .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 8px;
+            gap: 12px;
+            margin-top: 12px;
         }
-        .grid-cell-mob {
+        .grid-cell {
             background: #082032;
-            border-radius: 20px;
-            padding: 14px 8px;
+            border-radius: 22px;
+            padding: 16px 10px;
             text-align: center;
             border: 1px solid #ff4488;
         }
-        .grid-number-mob {
-            font-size: 1.8rem;
+        .grid-number {
+            font-size: 2.2rem;
             font-weight: 800;
             background: linear-gradient(135deg, #ff99aa, cyan);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Badge compact */
-        .badge-mob {
+        /* Badge */
+        .badge {
             background: #110927;
             border: 1px solid magenta;
             border-radius: 40px;
-            padding: 3px 10px;
-            font-size: 0.65rem;
+            padding: 4px 14px;
+            font-size: 0.7rem;
             color: #ccaaff;
             display: inline-block;
         }
 
-        /* Pied de page */
-        .footer-mob {
-            color: #6688aa;
-            font-size: 0.6rem;
-            text-align: center;
-            padding: 16px 0 8px;
-            border-top: 1px dashed #336699;
-            margin-top: 8px;
-        }
-
-        /* Boutons de navigation (remplace la barre du haut) */
-        .toggle-mob {
+        /* Header pour les panneaux */
+        .panel-header {
             display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin: 8px 0 4px;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
-        .toggle-btn-mob {
-            background: transparent;
-            border: 1px solid #2a5a9a;
-            color: #ccf0ff;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            flex: 1 0 auto;
-        }
-        .toggle-btn-mob.active {
-            background: #0044aa;
-            border-color: #ff0066;
-            color: white;
-            box-shadow: 0 0 15px #ff0066;
-        }
-
-        /* Petite touche néon */
-        .led-mob {
-            width: 8px;
-            height: 8px;
+        .led-panel {
+            width: 10px;
+            height: 10px;
             background: #00ffff;
             border-radius: 50%;
-            box-shadow: 0 0 12px cyan;
-            display: inline-block;
-            margin-right: 6px;
+            box-shadow: 0 0 15px cyan;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .credit-footer {
+            color: #6688aa;
+            font-size: 0.65rem;
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed #336699;
         }
 
-        /* Ajustements pour très petits écrans */
-        @media (max-width: 380px) {
-            .map-mobile {
-                min-height: 280px;
-            }
-            .big-value-mob {
-                font-size: 1.8rem;
-            }
+        /* Scroll personnalisé */
+        .left-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar {
+            width: 5px;
+        }
+        .left-panel::-webkit-scrollbar-track, .right-panel::-webkit-scrollbar-track {
+            background: #001a2f;
+            border-radius: 10px;
+        }
+        .left-panel::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb {
+            background: #00a6ff;
+            border-radius: 10px;
+        }
+
+        /* Effet de surbrillance sur la carte */
+        .map-center::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            border: 3px solid transparent;
+            border-radius: 32px;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.3) inset;
         }
     </style>
 </head>
 <body>
-    <div class="mobile-container">
-        <!-- HEADER COMPACT -->
-        <div class="mobile-header">
-            <div class="glitch-small">🗳️ MUNICIPALES 2026</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="pulse-mob"></span>
-                <span class="badge-mob">LIVE</span>
+    <div class="main-container">
+        <!-- PANEL GAUCHE : ANALYSES STRATÉGIQUES -->
+        <div class="left-panel">
+            <!-- En-tête du panel -->
+            <div class="card" style="padding: 16px;">
+                <div class="panel-header">
+                    <span class="led-panel"></span>
+                    <span style="color:white; font-weight:bold; letter-spacing:2px;">🔵 ANALYSE TEMPS RÉEL</span>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <span class="badge">IA PRÉDICTIVE</span>
+                    <span class="badge">MIN INTÉRIEUR</span>
+                </div>
+            </div>
+
+            <!-- Carte des abstentions (mini) -->
+            <div class="card">
+                <div class="card-title">📊 ABSTRACTION CLÉS</div>
+                <div class="stat-block">
+                    <div class="big-value">43,8%</div>
+                    <div class="stat-label">moyenne nationale</div>
+                    <div class="trend">▼ -1.2% vs 2020</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>18-34 ans</span> <span>63%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:63%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>35-64 ans</span> <span>47%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:47%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>65+ ans</span> <span>28%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:28%"></div></div>
+                </div>
+            </div>
+
+            <!-- Nuances en tête -->
+            <div class="card">
+                <div class="card-title">⚪ FORCES EN PRÉSENCE</div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🔵 UG (Gauche unie)</span> <span>31%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:31%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🔴 RN + alliés</span> <span>22%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:22%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>⚪ Ensemble</span> <span>18%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:18%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🟢 Écologistes</span> <span>15%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:15%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🔵 LR</span> <span>11%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:11%"></div></div>
+                </div>
+            </div>
+
+            <!-- Volatilité / bascules -->
+            <div class="card">
+                <div class="card-title">⚡ INDICATEURS DE BASCULE</div>
+                <div class="grid-2">
+                    <div class="grid-cell">
+                        <div class="grid-number">147</div>
+                        <div style="color:#aaccff;">communes bascules</div>
+                    </div>
+                    <div class="grid-cell">
+                        <div class="grid-number">18,2%</div>
+                        <div style="color:#aaccff;">volatilité</div>
+                    </div>
+                </div>
+                <div style="background:#082032; border-radius:20px; padding:14px; margin-top:12px; border:1px solid cyan;">
+                    <span style="color:#88ddff;">🔮 127 triangulaires probables</span>
+                </div>
+            </div>
+
+            <!-- Source -->
+            <div class="credit-footer">
+                Indi Ecorchard · Géographe<br>
+                data.gouv.fr
             </div>
         </div>
 
-        <!-- CARTE INTERACTIVE (PREMIÈRE VISIBLE) -->
-        <div class="map-mobile">
+        <!-- ZONE CENTRALE : CARTE INTERACTIVE PLEINE -->
+        <div class="map-center">
             <iframe 
                 src="https://indi75018.github.io/Municipales2026/"
                 title="CARTE MUNICIPALES 2026"
@@ -281,126 +327,84 @@
             </iframe>
         </div>
 
-        <!-- TOGGLES (filtres rapides) -->
-        <div class="toggle-mob">
-            <button class="toggle-btn-mob active">🔵 1ER TOUR</button>
-            <button class="toggle-btn-mob">⚪ 2ND TOUR</button>
-            <button class="toggle-btn-mob">🔴 NUANCES</button>
-            <button class="toggle-btn-mob">📊 ABST.</button>
-        </div>
-
-        <!-- PANEL D'ANALYSES (défile sous la carte) -->
-        <div class="analysis-mobile">
-            <!-- STATS RAPIDES -->
-            <div class="card-mobile">
-                <div class="card-title-mob">📈 INDICATEURS CLÉS</div>
-                <div class="stats-row-mob">
-                    <div class="stat-block-mob">
-                        <div class="big-value-mob">43,8%</div>
-                        <div class="stat-label-mob">Abstention</div>
-                        <div class="trend-mob">▼ -1.2%</div>
-                    </div>
-                    <div class="stat-block-mob">
-                        <div class="big-value-mob">UG 31%</div>
-                        <div class="stat-label-mob">Nuance tête</div>
-                        <div class="trend-mob">▲ +2.4%</div>
-                    </div>
-                    <div class="stat-block-mob">
-                        <div class="big-value-mob">147</div>
-                        <div class="stat-label-mob">Bascules</div>
-                        <div class="trend-mob">communes</div>
-                    </div>
-                    <div class="stat-block-mob">
-                        <div class="big-value-mob">18,2%</div>
-                        <div class="stat-label-mob">Volatilité</div>
-                        <div class="trend-mob">record</div>
-                    </div>
+        <!-- PANEL DROIT : ANALYSES PRÉDICTIVES ET PROJECTIONS -->
+        <div class="right-panel">
+            <!-- Projection 2nd tour -->
+            <div class="card">
+                <div class="card-title">🧠 PROJECTION 2ND TOUR</div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🔵 UG + ÉCO</span> <span>46%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:46%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🔴 RN</span> <span>30%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:30%; background:linear-gradient(90deg,#ff4444,#ff0088);"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>⚪ ENS + LR</span> <span>24%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:24%; background:linear-gradient(90deg,#ffff88,#ffaa00);"></div></div>
+                </div>
+                <div style="margin-top:16px; background:#082032; border-radius:20px; padding:12px; text-align:center;">
+                    <span style="color:#ffaa88;">58 duels UG/RN · 127 triangulaires</span>
                 </div>
             </div>
 
-            <!-- PROJECTION 2ND TOUR -->
-            <div class="card-mobile">
-                <div class="card-title-mob">🧠 PROJECTION 2ND TOUR</div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>🔵 UG+ECO</span> <span>46%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:46%"></div></div>
+            <!-- Zones chaudes -->
+            <div class="card">
+                <div class="card-title">📡 ZONES DE TENSION</div>
+                <div class="grid-2">
+                    <div class="grid-cell">
+                        <div class="grid-number">+8,2%</div>
+                        <div style="color:#88ddff;">RN Grand Est</div>
+                    </div>
+                    <div class="grid-cell">
+                        <div class="grid-number">63%</div>
+                        <div style="color:#88ddff;">-30 ans abst.</div>
+                    </div>
+                    <div class="grid-cell">
+                        <div class="grid-number">11</div>
+                        <div style="color:#ffaaaa;">villes >100k</div>
+                    </div>
+                    <div class="grid-cell">
+                        <div class="grid-number">81%</div>
+                        <div style="color:#88ff88;">report ECO→UG</div>
+                    </div>
                 </div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>🔴 RN</span> <span>30%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:30%; background:linear-gradient(90deg,#ff4444,#ff0088);"></div></div>
-                </div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>⚪ ENS+LR</span> <span>24%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:24%; background:linear-gradient(90deg,#ffff88,#ffaa00);"></div></div>
-                </div>
-                <div style="background:#082032; border-radius:20px; padding:10px; margin-top:10px; text-align:center; border:1px solid cyan;">
-                    <span style="color:#ffaa88;">127 triangulaires · 58 duels UG/RN</span>
+                <div style="margin-top:16px; border-top:1px dashed #ff4488; padding-top:12px;">
+                    <span style="color:cyan;">⚠️ Alerte rouge : </span><span style="color:#ffaa88;">Bassin minier · abstention 68%</span>
                 </div>
             </div>
 
-            <!-- ZONES DE TENSION (grille compacte) -->
-            <div class="card-mobile">
-                <div class="card-title-mob">📡 ZONES CHAUDES</div>
-                <div class="grid-2-mob">
-                    <div class="grid-cell-mob">
-                        <div class="grid-number-mob">+8,2%</div>
-                        <div style="color:#88ddff; font-size:0.7rem;">RN Grand Est</div>
-                    </div>
-                    <div class="grid-cell-mob">
-                        <div class="grid-number-mob">63%</div>
-                        <div style="color:#88ddff; font-size:0.7rem;">-30 ans abst.</div>
-                    </div>
-                    <div class="grid-cell-mob">
-                        <div class="grid-number-mob">11</div>
-                        <div style="color:#ffaaaa; font-size:0.7rem;">villes >100k</div>
-                    </div>
-                    <div class="grid-cell-mob">
-                        <div class="grid-number-mob">81%</div>
-                        <div style="color:#88ff88; font-size:0.7rem;">report ECO→UG</div>
-                    </div>
+            <!-- Thermogramme et corrélations -->
+            <div class="card">
+                <div class="card-title">🌡️ CORRÉLATIONS SOCIODÉMO</div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🏘️ QPV abstention</span> <span>58%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:58%"></div></div>
                 </div>
-                <div style="margin-top:12px; background:#33001a; border-radius:20px; padding:10px; border:1px solid #ff4488;">
-                    <span style="color:cyan;">⚠️ Bassin minier :</span> <span style="color:#ffaa88;">abstention 68%</span>
+                <div class="progress-item">
+                    <div class="progress-label"><span>🏡 Rural abstention</span> <span>38%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:38%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label"><span>📈 HLM >25%</span> <span>+15% abst.</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:70%"></div></div>
                 </div>
             </div>
 
-            <!-- ABSTRACTION PAR ÂGE ET CORRÉLATIONS -->
-            <div class="card-mobile">
-                <div class="card-title-mob">🌡️ ABSTRACTION DÉTAILLÉE</div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>🔵 18-34 ans</span> <span>63%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:63%"></div></div>
+            <!-- Contact et mise à jour -->
+            <div class="card" style="background: #0a1022;">
+                <div style="display:flex; justify-content:space-between; color:#88aaff; font-size:0.75rem;">
+                    <span>📡 MAJ 17/03 23:59</span>
+                    <span>indi.ecorchard@gmail.com</span>
                 </div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>⚪ 35-64 ans</span> <span>47%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:47%"></div></div>
+                <div style="display:flex; gap:8px; margin-top:10px; justify-content:center;">
+                    <span style="background:#0044aa; border-radius:30px; padding:4px 12px; color:white;">BLEU</span>
+                    <span style="background:#ffffff; border-radius:30px; padding:4px 12px; color:black;">BLANC</span>
+                    <span style="background:#aa2222; border-radius:30px; padding:4px 12px; color:white;">ROUGE</span>
                 </div>
-                <div class="progress-item-mob">
-                    <div class="progress-label-mob"><span>🔴 65+ ans</span> <span>28%</span></div>
-                    <div class="progress-bg-mob"><div class="progress-fill-mob" style="width:28%"></div></div>
-                </div>
-                <div style="margin-top:12px; background:#082032; border-radius:20px; padding:10px;">
-                    <span style="color:#88ddff;">🏘️ QPV : 58% abstention</span><br>
-                    <span style="color:#ffaa88;">📈 HLM >25% : +15% abstention</span>
-                </div>
-            </div>
-
-            <!-- SOURCE ET CRÉDITS -->
-            <div class="footer-mob">
-                <span class="led-mob"></span> data.gouv.fr · Indi Ecorchard · MAJ 17/03 23:59<br>
-                📧 indi.ecorchard@gmail.com · NEON BLEU/BLANC/ROUGE
             </div>
         </div>
     </div>
-
-    <script>
-        // Interaction basique pour les toggles
-        document.querySelectorAll('.toggle-btn-mob').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.toggle-btn-mob').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    </script>
 </body>
 </html>
